@@ -319,7 +319,7 @@ const HistoryPage = () => {
                               {request.participantIds?.join(', ')}
                             </div>
                             <div className="text-sm text-gray-500">
-                              ID: {request.id.slice(-8)}
+                              Requested by: {request.userName || 'Unknown User'}
                             </div>
                           </div>
                         </td>
