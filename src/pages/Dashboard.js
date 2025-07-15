@@ -142,6 +142,7 @@ const Dashboard = () => {
           icon={Clock}
           color="warning"
           trend={"+2 from yesterday"}
+          onClick={() => navigate('/active-requests')}
         />
         <StatCard
           title="Overdue Files"
@@ -149,6 +150,7 @@ const Dashboard = () => {
           icon={AlertTriangle}
           color="danger"
           trend={stats.overdue > 0 ? "Requires attention" : "All good"}
+          onClick={() => navigate('/overdue-files')}
         />
         <StatCard
           title="Completed"
@@ -156,6 +158,7 @@ const Dashboard = () => {
           icon={CheckCircle}
           color="success"
           trend={"+5 this week"}
+          onClick={() => navigate('/completed-requests')}
         />
         <StatCard
           title="Pending Approval"
@@ -163,6 +166,7 @@ const Dashboard = () => {
           icon={FileText}
           color="primary"
           trend={isAdmin ? "Awaiting your approval" : "Awaiting approval"}
+          onClick={() => navigate('/pending-approval')}
         />
       </motion.div>
 

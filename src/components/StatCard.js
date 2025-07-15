@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-const StatCard = ({ title, value, icon: Icon, color, trend }) => {
+const StatCard = ({ title, value, icon: Icon, color, trend, onClick }) => {
   const colorClasses = {
     primary: 'bg-primary-50 text-primary-600',
     success: 'bg-success-50 text-success-600',
@@ -19,7 +19,8 @@ const StatCard = ({ title, value, icon: Icon, color, trend }) => {
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
-      className="card"
+      className={`card ${onClick ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}
+      onClick={onClick}
     >
       <div className="flex items-center justify-between">
         <div className="flex-1">

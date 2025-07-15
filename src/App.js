@@ -11,6 +11,10 @@ import AdminPage from './pages/AdminPage';
 import HistoryPage from './pages/HistoryPage';
 import ManageStudyIds from './pages/ManageStudyIds';
 import TestPage from './pages/TestPage';
+import ActiveRequestsPage from './pages/ActiveRequestsPage';
+import OverdueFilesPage from './pages/OverdueFilesPage';
+import CompletedRequestsPage from './pages/CompletedRequestsPage';
+import PendingApprovalPage from './pages/PendingApprovalPage';
 import './index.css';
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
@@ -81,6 +85,38 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <HistoryPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="active-requests" 
+          element={
+            <ProtectedRoute>
+              <ActiveRequestsPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="overdue-files" 
+          element={
+            <ProtectedRoute>
+              <OverdueFilesPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="completed-requests" 
+          element={
+            <ProtectedRoute>
+              <CompletedRequestsPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="pending-approval" 
+          element={
+            <ProtectedRoute>
+              <PendingApprovalPage />
             </ProtectedRoute>
           } 
         />
