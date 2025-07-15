@@ -38,19 +38,34 @@ const HistoryPage = () => {
       ? query(collection(db, 'fileRequests'), orderBy('createdAt', 'desc'))
       : query(
           collection(db, 'fileRequests'), 
-          where('userId', '==', currentUser.uid),
-          orderBy('createdAt', 'desc')
+          where('userId', '==', currentUser.uid)
+          // Temporarily remove orderBy to check if it's an index issue
         );
 
-    const unsubscribe = onSnapshot(requestsQuery, (snapshot) => {
-      const requestsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+    const unsubscribe = onSnapshot(
+      requestsQuery, 
+      (snapshot) => {
+        const requestsData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
 
-      setRequests(requestsData);
-      setLoading(false);
-    });
+        console.log('HistoryPage Debug:', {
+          isAdmin,
+          currentUserUid: currentUser?.uid,
+          currentUserEmail: currentUser?.email,
+          totalDocs: snapshot.size,
+          requestsData: requestsData.map(r => ({ id: r.id, userId: r.userId, userName: r.userName, status: r.status }))
+        });
+
+        setRequests(requestsData);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('HistoryPage Firestore Error:', error);
+        setLoading(false);
+      }
+    );
 
     return unsubscribe;
   }, [currentUser, isAdmin]);
