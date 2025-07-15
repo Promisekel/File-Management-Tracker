@@ -77,17 +77,20 @@ const FileRequestCard = ({ request, showApprovalActions = false }) => {
   return (
     <motion.div
       layout
-      className={`card border-l-4 ${
+      className={`relative overflow-hidden rounded-xl p-6 border-l-4 backdrop-blur-sm ${
         request.status === 'overdue' || isRequestOverdue
-          ? 'border-l-danger-500 bg-danger-50'
+          ? 'border-l-red-500 bg-gradient-to-br from-red-50/80 to-rose-100/60 border border-red-200/50 shadow-lg shadow-red-500/10'
           : request.status === 'active'
-          ? 'border-l-warning-500 bg-warning-50'
+          ? 'border-l-amber-500 bg-gradient-to-br from-amber-50/80 to-orange-100/60 border border-amber-200/50 shadow-lg shadow-amber-500/10'
           : request.status === 'returned'
-          ? 'border-l-success-500 bg-success-50'
-          : 'border-l-gray-500'
+          ? 'border-l-green-500 bg-gradient-to-br from-green-50/80 to-emerald-100/60 border border-green-200/50 shadow-lg shadow-green-500/10'
+          : 'border-l-gray-500 bg-gradient-to-br from-gray-50/80 to-slate-100/60 border border-gray-200/50 shadow-lg'
       }`}
     >
-      <div className="flex items-start justify-between">
+      {/* Subtle shine effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none"></div>
+      
+      <div className="relative flex items-start justify-between">
         <div className="flex items-start space-x-4 flex-1">
           {/* Status Icon */}
           <div className={`p-2 rounded-lg ${

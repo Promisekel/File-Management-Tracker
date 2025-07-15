@@ -15,6 +15,7 @@ import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { isOverdue } from '../utils/dateUtils';
 import FileRequestCard from '../components/FileRequestCard';
+import DetailStatCard from '../components/DetailStatCard';
 
 const OverdueFilesPage = () => {
   const { currentUser, isAdmin } = useAuth();

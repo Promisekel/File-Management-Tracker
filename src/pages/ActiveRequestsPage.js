@@ -14,6 +14,7 @@ import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { isOverdue } from '../utils/dateUtils';
 import FileRequestCard from '../components/FileRequestCard';
+import DetailStatCard from '../components/DetailStatCard';
 
 const ActiveRequestsPage = () => {
   const { currentUser, isAdmin } = useAuth();
@@ -128,53 +129,34 @@ const ActiveRequestsPage = () => {
         animate={{ opacity: 1, y: 0 }}
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
       >
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Active</p>
-              <p className="text-2xl font-bold text-warning-600">{stats.total}</p>
-            </div>
-            <div className="p-3 bg-warning-50 rounded-lg">
-              <FileText className="w-6 h-6 text-warning-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Overdue</p>
-              <p className="text-2xl font-bold text-danger-600">{stats.overdue}</p>
-            </div>
-            <div className="p-3 bg-danger-50 rounded-lg">
-              <Timer className="w-6 h-6 text-danger-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Due Today</p>
-              <p className="text-2xl font-bold text-primary-600">{stats.dueToday}</p>
-            </div>
-            <div className="p-3 bg-primary-50 rounded-lg">
-              <Calendar className="w-6 h-6 text-primary-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Due Tomorrow</p>
-              <p className="text-2xl font-bold text-blue-600">{stats.dueTomorrow}</p>
-            </div>
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <Calendar className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
+        <DetailStatCard
+          title="Total Active"
+          value={stats.total}
+          icon={FileText}
+          color="warning"
+          delay={0}
+        />
+        <DetailStatCard
+          title="Overdue"
+          value={stats.overdue}
+          icon={Timer}
+          color="danger"
+          delay={0.1}
+        />
+        <DetailStatCard
+          title="Due Today"
+          value={stats.dueToday}
+          icon={Calendar}
+          color="primary"
+          delay={0.2}
+        />
+        <DetailStatCard
+          title="Due Tomorrow"
+          value={stats.dueTomorrow}
+          icon={Calendar}
+          color="primary"
+          delay={0.3}
+        />
       </motion.div>
 
       {/* Requests List */}
