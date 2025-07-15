@@ -17,6 +17,19 @@ import {
   onSnapshot, 
   orderBy, 
   doc, 
+  updateDoc, 
+  serverTimestamp,
+  setDoc
+} from 'firebase/firestore';
+import { db } from '../config/firebase';
+import { useAuth } from '../contexts/AuthContext';
+import { isOverdue } from '../utils/dateUtils';
+import { 
+  collection, 
+  query, 
+  onSnapshot, 
+  orderBy, 
+  doc, 
   updateDoc,
   serverTimestamp,
   setDoc
@@ -57,10 +70,17 @@ const AdminPage = () => {
 
       setRequests(requestsData);
       
-      // Calculate stats
+      // Calculate stats with dynamic overdue detection
       const newStats = requestsData.reduce((acc, request) => {
         acc.total++;
         acc[request.status] = (acc[request.status] || 0) + 1;
+        
+        // Check if active requests are overdue
+        if (request.status === 'active' && request.dueDate && isOverdue(request.dueDate)) {
+          acc.overdue = (acc.overdue || 0) + 1;
+          acc.active = acc.active - 1; // Remove from active count
+        }
+        
         return acc;
       }, { total: 0, pending: 0, active: 0, overdue: 0, returned: 0 });
       
@@ -70,6 +90,32 @@ const AdminPage = () => {
 
     return unsubscribe;
   }, []);
+
+  // Recalculate stats periodically for dynamic overdue detection
+  useEffect(() => {
+    const calculateStats = () => {
+      const newStats = requests.reduce((acc, request) => {
+        acc.total++;
+        acc[request.status] = (acc[request.status] || 0) + 1;
+        
+        // Check if active requests are overdue
+        if (request.status === 'active' && request.dueDate && isOverdue(request.dueDate)) {
+          acc.overdue = (acc.overdue || 0) + 1;
+          acc.active = acc.active - 1; // Remove from active count
+        }
+        
+        return acc;
+      }, { total: 0, pending: 0, active: 0, overdue: 0, returned: 0 });
+      
+      setStats(newStats);
+    };
+
+    if (requests.length > 0) {
+      calculateStats();
+      const interval = setInterval(calculateStats, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [requests]);
 
   const filteredRequests = requests.filter(request => {
     if (filterStatus === 'all') return true;
