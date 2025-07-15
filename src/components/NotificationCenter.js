@@ -8,15 +8,14 @@ import {
   XCircle, 
   Clock, 
   AlertTriangle,
-  User,
   FileText
 } from 'lucide-react';
-import { collection, query, where, onSnapshot, orderBy, doc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 
 const NotificationCenter = () => {
-  const { currentUser, isAdmin } = useAuth();
+  const { currentUser } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -97,24 +96,6 @@ const NotificationCenter = () => {
         return <CheckCircle className="w-5 h-5 text-green-500" />;
       default:
         return <Bell className="w-5 h-5 text-gray-500" />;
-    }
-  };
-
-  const getNotificationColor = (type) => {
-    switch (type) {
-      case 'request_approved':
-      case 'file_returned':
-        return 'bg-green-50 border-green-200';
-      case 'request_rejected':
-        return 'bg-red-50 border-red-200';
-      case 'request_submitted':
-        return 'bg-blue-50 border-blue-200';
-      case 'file_overdue':
-        return 'bg-orange-50 border-orange-200';
-      case 'file_due_soon':
-        return 'bg-yellow-50 border-yellow-200';
-      default:
-        return 'bg-gray-50 border-gray-200';
     }
   };
 

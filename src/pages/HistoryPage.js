@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   History as HistoryIcon, 
   Calendar, 
-  Filter, 
   Search,
   Download,
   FileText,

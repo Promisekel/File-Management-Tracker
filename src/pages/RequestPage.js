@@ -8,7 +8,7 @@ import {
   AlertCircle,
   CheckCircle
 } from 'lucide-react';
-import { collection, addDoc, serverTimestamp, query, onSnapshot, where, orderBy } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, onSnapshot, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';

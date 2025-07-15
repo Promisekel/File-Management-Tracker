@@ -29,7 +29,6 @@ const FileRequestCard = ({ request, showApprovalActions = false }) => {
   };
 
   const Icon = statusIcon[request.status] || Clock;
-  const colorScheme = getStatusColor(request.status);
   const isRequestOverdue = request.dueDate && isOverdue(request.dueDate);
 
   const handleApproval = async (approved) => {

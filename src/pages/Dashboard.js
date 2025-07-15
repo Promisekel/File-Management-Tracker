@@ -12,7 +12,6 @@ import {
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { formatDistanceToNow } from '../utils/dateUtils';
 import FileRequestCard from '../components/FileRequestCard';
 import StatCard from '../components/StatCard';
 

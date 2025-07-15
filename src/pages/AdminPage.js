@@ -9,7 +9,6 @@ import {
   Filter,
   Download,
   RefreshCw,
-  Settings,
   UserPlus
 } from 'lucide-react';
 import { 
@@ -76,53 +75,6 @@ const AdminPage = () => {
     if (filterStatus === 'all') return true;
     return request.status === filterStatus;
   });
-
-  const handleBulkAction = async (action, selectedRequests) => {
-    try {
-      const promises = selectedRequests.map(async (request) => {
-        const updates = {
-          status: action,
-          updatedAt: serverTimestamp()
-        };
-
-        if (action === 'active') {
-          const dueDate = new Date();
-          dueDate.setHours(dueDate.getHours() + 24);
-          updates.dueDate = dueDate;
-          updates.approvedAt = serverTimestamp();
-          updates.approvedBy = currentUser.email;
-        } else if (action === 'rejected') {
-          updates.rejectedAt = serverTimestamp();
-          updates.rejectedBy = currentUser.email;
-        } else if (action === 'returned') {
-          updates.returnedAt = serverTimestamp();
-        }
-
-        // Update the document
-        await updateDoc(doc(db, 'fileRequests', request.id), updates);
-
-        // Send notifications
-        try {
-          if (action === 'active') {
-            await notifyRequestApproved(request, updates.dueDate);
-          } else if (action === 'rejected') {
-            await notifyRequestRejected(request, 'Please contact an administrator for more details.');
-          } else if (action === 'returned') {
-            await notifyFileReturned(request);
-          }
-        } catch (notificationError) {
-          console.error('Error sending notification:', notificationError);
-          // Don't fail the whole operation if notification fails
-        }
-      });
-
-      await Promise.all(promises);
-      toast.success(`Successfully ${action === 'active' ? 'approved' : action} ${selectedRequests.length} request(s)`);
-    } catch (error) {
-      console.error('Error performing bulk action:', error);
-      toast.error('Failed to perform bulk action');
-    }
-  };
 
   const handleAddAdmin = async () => {
     if (!newAdminEmail.trim()) {
