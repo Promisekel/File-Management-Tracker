@@ -24,18 +24,6 @@ import {
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { isOverdue } from '../utils/dateUtils';
-import { 
-  collection, 
-  query, 
-  onSnapshot, 
-  orderBy, 
-  doc, 
-  updateDoc,
-  serverTimestamp,
-  setDoc
-} from 'firebase/firestore';
-import { db } from '../config/firebase';
-import { useAuth } from '../contexts/AuthContext';
 import FileRequestCard from '../components/FileRequestCard';
 import StatCard from '../components/StatCard';
 import toast from 'react-hot-toast';
