@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read and write their own file requests
+    match /fileRequests/{requestId} {
+      allow read, write: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Study IDs - authenticated users can read, only admins can write
+    match /studyIds/{studyId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
+    }
+    
+    // Notifications - users can read/update their own notifications, system can create
+    match /notifications/{notificationId} {
+      allow read, update: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+    }
+    
+    // Users collection for admin lookup
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        (request.auth.uid == userId || isAdmin());
+    }
+    
+    // Admin collections - only admins can access
+    match /admins/{userId} {
+      allow read, write: if request.auth != null && isAdmin();
+    }
+    
+    match /adminEmails/{email} {
+      allow read, write: if request.auth != null && isAdmin();
+    }
+    
+    // Function to check if user is admin
+    function isAdmin() {
+      return request.auth.token.email == 'promisebansah12@gmail.com' ||
+             exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+  }
+}
