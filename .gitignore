@@ -102,3 +102,5 @@ Thumbs.db
 .firebase/
 firebase-debug.log
 firestore-debug.log
+serviceAccountKey.json
+firebase-admin-key.json
