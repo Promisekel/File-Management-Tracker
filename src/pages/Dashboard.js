@@ -12,6 +12,7 @@ import {
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
+import { isOverdue } from '../utils/dateUtils';
 import FileRequestCard from '../components/FileRequestCard';
 import StatCard from '../components/StatCard';
 
@@ -45,23 +46,43 @@ const Dashboard = () => {
       }));
 
       setRequests(requestsData);
-      
-      // Calculate stats
-      const newStats = requestsData.reduce((acc, request) => {
-        acc[request.status] = (acc[request.status] || 0) + 1;
-        return acc;
-      }, { active: 0, overdue: 0, returned: 0, pending: 0 });
-      
-      setStats(newStats);
       setLoading(false);
     });
 
     return unsubscribe;
   }, [currentUser, isAdmin]);
 
-  const activeRequests = requests.filter(r => r.status === 'active');
+  // Calculate stats whenever requests change or time passes
+  useEffect(() => {
+    const calculateStats = () => {
+      const newStats = requests.reduce((acc, request) => {
+        // Count by status first
+        acc[request.status] = (acc[request.status] || 0) + 1;
+        
+        // Check if active requests are overdue
+        if (request.status === 'active' && request.dueDate && isOverdue(request.dueDate)) {
+          acc.overdue = (acc.overdue || 0) + 1;
+          acc.active = acc.active - 1; // Remove from active count
+        }
+        
+        return acc;
+      }, { active: 0, overdue: 0, returned: 0, pending: 0 });
+      
+      setStats(newStats);
+    };
+
+    calculateStats();
+
+    // Recalculate every minute to catch newly overdue items
+    const interval = setInterval(calculateStats, 60000);
+    return () => clearInterval(interval);
+  }, [requests]);
+
+  const activeRequests = requests.filter(r => r.status === 'active' && (!r.dueDate || !isOverdue(r.dueDate)));
   const pendingRequests = requests.filter(r => r.status === 'pending');
-  const overdueRequests = requests.filter(r => r.status === 'overdue');
+  const overdueRequests = requests.filter(r => 
+    r.status === 'overdue' || (r.status === 'active' && r.dueDate && isOverdue(r.dueDate))
+  );
 
   return (
     <div className="space-y-6">
