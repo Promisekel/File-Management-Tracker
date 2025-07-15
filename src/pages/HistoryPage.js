@@ -21,6 +21,7 @@ import {
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { formatDate, getStatusColor } from '../utils/dateUtils';
+import DetailStatCard from '../components/DetailStatCard';
 
 const HistoryPage = () => {
   const { currentUser, isAdmin } = useAuth();
@@ -190,31 +191,35 @@ const HistoryPage = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="card space-y-4"
+        className="relative overflow-hidden rounded-xl p-6 bg-gradient-to-br from-indigo-50/80 to-blue-100/60 border border-indigo-200/50 shadow-lg backdrop-blur-sm"
       >
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search by participant ID, user name, or reason..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          />
-        </div>
+        {/* Subtle shine effect */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent pointer-events-none"></div>
+        
+        <div className="relative space-y-4">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-indigo-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search by participant ID, user name, or reason..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 border border-indigo-200/50 rounded-xl bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 placeholder-indigo-400"
+            />
+          </div>
 
-        <div className="flex flex-wrap gap-4">
-          {/* Status Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Status
-            </label>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
+          <div className="flex flex-wrap gap-4">
+            {/* Status Filter */}
+            <div>
+              <label className="block text-sm font-medium text-indigo-700 mb-2">
+                Status
+              </label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-4 py-3 border border-indigo-200/50 rounded-xl bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-indigo-700"
+              >
               <option value="all">All Statuses</option>
               <option value="pending">Pending</option>
               <option value="active">Active</option>
@@ -223,27 +228,28 @@ const HistoryPage = () => {
             </select>
           </div>
 
-          {/* Time Range Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Time Range
-            </label>
-            <select
-              value={filterTimeRange}
-              onChange={(e) => setFilterTimeRange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="all">All Time</option>
-              <option value="today">Today</option>
-              <option value="week">Past Week</option>
-              <option value="month">Past Month</option>
-              <option value="quarter">Past Quarter</option>
-            </select>
+            {/* Time Range Filter */}
+            <div>
+              <label className="block text-sm font-medium text-indigo-700 mb-2">
+                Time Range
+              </label>
+              <select
+                value={filterTimeRange}
+                onChange={(e) => setFilterTimeRange(e.target.value)}
+                className="px-4 py-3 border border-indigo-200/50 rounded-xl bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-indigo-700"
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="week">Past Week</option>
+                <option value="month">Past Month</option>
+                <option value="quarter">Past Quarter</option>
+              </select>
+            </div>
           </div>
-        </div>
 
-        <div className="text-sm text-gray-600">
-          Showing {filteredRequests.length} of {requests.length} requests
+          <div className="text-sm text-indigo-600 font-medium">
+            Showing {filteredRequests.length} of {requests.length} requests
+          </div>
         </div>
       </motion.div>
 
@@ -252,16 +258,19 @@ const HistoryPage = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="card overflow-hidden"
+        className="relative overflow-hidden rounded-xl bg-gradient-to-br from-white to-gray-50/50 border border-gray-200/50 shadow-lg backdrop-blur-sm"
       >
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
-          </div>
-        ) : filteredRequests.length === 0 ? (
-          <div className="text-center py-12">
-            <HistoryIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+        {/* Subtle shine effect */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none"></div>
+        <div className="relative">
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+            </div>
+          ) : filteredRequests.length === 0 ? (
+            <div className="text-center py-12 px-6">
+              <HistoryIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
               No history found
             </h3>
             <p className="text-gray-600">
@@ -273,32 +282,32 @@ const HistoryPage = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-200/50">
+              <thead className="bg-gradient-to-r from-gray-50 to-indigo-50/30">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Request
                   </th>
                   {isAdmin && (
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                       User
                     </th>
                   )}
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Created
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Duration
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Reason
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white/80 divide-y divide-gray-200/50">
                 <AnimatePresence>
                   {filteredRequests.map((request, index) => {
                     const StatusIcon = getStatusIcon(request.status);
@@ -365,6 +374,7 @@ const HistoryPage = () => {
             </table>
           </div>
         )}
+        </div>
       </motion.div>
 
       {/* Summary Stats */}
@@ -373,20 +383,30 @@ const HistoryPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-4"
+          className="grid grid-cols-1 md:grid-cols-4 gap-6"
         >
-          {['pending', 'active', 'returned', 'overdue'].map(status => {
+          {['pending', 'active', 'returned', 'overdue'].map((status, index) => {
             const count = filteredRequests.filter(r => r.status === status).length;
             const percentage = ((count / filteredRequests.length) * 100).toFixed(1);
             
+            const statusConfig = {
+              pending: { color: 'primary', icon: Clock },
+              active: { color: 'warning', icon: FileText },
+              returned: { color: 'success', icon: CheckCircle },
+              overdue: { color: 'danger', icon: AlertTriangle }
+            };
+            
+            const config = statusConfig[status];
+            
             return (
-              <div key={status} className="card text-center">
-                <div className={`text-2xl font-bold text-${getStatusColor(status)}-600`}>
-                  {count}
-                </div>
-                <div className="text-sm text-gray-600 capitalize">{status}</div>
-                <div className="text-xs text-gray-500">{percentage}%</div>
-              </div>
+              <DetailStatCard
+                key={status}
+                title={status.charAt(0).toUpperCase() + status.slice(1)}
+                value={count}
+                icon={config.icon}
+                color={config.color}
+                delay={index * 0.1}
+              />
             );
           })}
         </motion.div>
