@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Clock, 
@@ -18,6 +19,7 @@ import StatCard from '../components/StatCard';
 
 const Dashboard = () => {
   const { currentUser, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -174,11 +176,17 @@ const Dashboard = () => {
         >
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
           <div className="flex flex-wrap gap-3">
-            <button className="btn-primary flex items-center">
+            <button 
+              className="btn-primary flex items-center"
+              onClick={() => navigate('/request')}
+            >
               <FileText className="w-4 h-4 mr-2" />
               Request New Files
             </button>
-            <button className="btn-secondary flex items-center">
+            <button 
+              className="btn-secondary flex items-center"
+              onClick={() => navigate('/history')}
+            >
               <Calendar className="w-4 h-4 mr-2" />
               View History
             </button>
