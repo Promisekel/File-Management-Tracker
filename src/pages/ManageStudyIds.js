@@ -543,11 +543,52 @@ const ManageStudyIds = () => {
               exit={{ scale: 0.9, opacity: 0 }}
               className="bg-white rounded-xl p-6 w-full max-w-lg mx-4"
             >
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                <FileText className="w-5 h-5 mr-2 text-primary-600" />
                 Bulk Add Study IDs
               </h3>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
+                {/* Instructions */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-medium text-blue-900 mb-2">How to bulk add Study IDs:</h4>
+                      <ul className="text-sm text-blue-800 space-y-1">
+                        <li>• Enter one participant ID per line</li>
+                        <li>• IDs will be automatically converted to uppercase</li>
+                        <li>• Duplicates will be automatically skipped</li>
+                        <li>• Invalid or empty lines will be ignored</li>
+                        <li>• You can paste from Excel, CSV, or any text source</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Examples */}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-2">Examples:</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="font-medium text-gray-700 mb-1">Simple format:</p>
+                      <code className="block bg-white p-2 rounded border text-gray-800 font-mono text-xs">
+                        PART-001<br/>
+                        PART-002<br/>
+                        PART-003
+                      </code>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-700 mb-1">Mixed formats:</p>
+                      <code className="block bg-white p-2 rounded border text-gray-800 font-mono text-xs">
+                        SUB001<br/>
+                        participant-002<br/>
+                        STUDY_ID_003
+                      </code>
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Participant IDs (one per line)
@@ -555,13 +596,22 @@ const ManageStudyIds = () => {
                   <textarea
                     value={bulkIds}
                     onChange={(e) => setBulkIds(e.target.value)}
-                    placeholder="PART-001&#10;PART-002&#10;PART-003"
-                    rows={8}
+                    placeholder={`PART-001\nPART-002\nPART-003\nSUB-004\nSTUDY-005`}
+                    rows={10}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none font-mono text-sm"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Enter one participant ID per line. IDs will be automatically converted to uppercase.
-                  </p>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-xs text-gray-500">
+                      {bulkIds.split('\n').filter(id => id.trim()).length} IDs ready to add
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setBulkIds('')}
+                      className="text-xs text-gray-400 hover:text-gray-600"
+                    >
+                      Clear all
+                    </button>
+                  </div>
                 </div>
               </div>
 

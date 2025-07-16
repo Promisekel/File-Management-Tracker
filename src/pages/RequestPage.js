@@ -6,16 +6,18 @@ import {
   FileText, 
   Send,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Users,
+  UserCheck
 } from 'lucide-react';
-import { collection, addDoc, serverTimestamp, query, onSnapshot, where } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, onSnapshot, where, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { notifyRequestSubmitted, notifyAdminNewRequest, getAdminUserIds } from '../utils/notificationService';
 
 const RequestPage = () => {
-  const { currentUser, loading: authLoading } = useAuth();
+  const { currentUser, isAdmin, loading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
   const [reason, setReason] = useState('');
@@ -23,6 +25,11 @@ const RequestPage = () => {
   const [unavailableIds, setUnavailableIds] = useState(new Set());
   const [availableIds, setAvailableIds] = useState([]);
   const [loadingIds, setLoadingIds] = useState(true);
+  
+  // Admin-specific states
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [availableUsers, setAvailableUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   // Debug authentication state
   useEffect(() => {
@@ -32,6 +39,31 @@ const RequestPage = () => {
       uid: currentUser?.uid
     });
   }, [currentUser, authLoading]);
+
+  // Load available users for admin selection
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    setLoadingUsers(true);
+    const usersQuery = query(
+      collection(db, 'users'),
+      orderBy('displayName', 'asc')
+    );
+
+    const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
+      const usersData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setAvailableUsers(usersData);
+      setLoadingUsers(false);
+    }, (error) => {
+      console.error('Error fetching users:', error);
+      setLoadingUsers(false);
+    });
+
+    return unsubscribe;
+  }, [isAdmin]);
 
   // Get available study IDs from database
   useEffect(() => {
@@ -134,42 +166,69 @@ const RequestPage = () => {
       return;
     }
 
+    // For admin requests, check if a user is selected
+    if (isAdmin && !selectedUser && availableUsers.length > 0) {
+      toast.error('Please select a user for this request');
+      return;
+    }
+
     setLoading(true);
     try {
+      // Determine who the request is for
+      const requestForUser = isAdmin && selectedUser ? selectedUser : currentUser;
+      
       // Create the request
       const docRef = await addDoc(collection(db, 'fileRequests'), {
-        userId: currentUser.uid,
-        userEmail: currentUser.email,
-        userName: currentUser.displayName,
+        userId: requestForUser.uid || requestForUser.id,
+        userEmail: requestForUser.email,
+        userName: requestForUser.displayName,
         participantIds: selectedIds,
         reason: reason.trim(),
         status: 'pending',
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
+        // Add admin info if this is an admin request for another user
+        ...(isAdmin && selectedUser && {
+          requestedByAdmin: true,
+          adminId: currentUser.uid,
+          adminEmail: currentUser.email,
+          adminName: currentUser.displayName
+        })
       });
 
       // Create notifications
       const requestData = {
         id: docRef.id,
-        userId: currentUser.uid,
-        userEmail: currentUser.email,
-        userName: currentUser.displayName,
+        userId: requestForUser.uid || requestForUser.id,
+        userEmail: requestForUser.email,
+        userName: requestForUser.displayName,
         participantIds: selectedIds,
-        reason: reason.trim()
+        reason: reason.trim(),
+        ...(isAdmin && selectedUser && {
+          requestedByAdmin: true,
+          adminName: currentUser.displayName
+        })
       };
 
-      // Notify the user that their request was submitted
+      // Notify the user that their request was submitted (or admin if admin made it)
       await notifyRequestSubmitted(requestData);
 
-      // Notify all admins about the new request
-      const adminUserIds = await getAdminUserIds();
-      if (adminUserIds.length > 0) {
-        await notifyAdminNewRequest(requestData, adminUserIds);
+      // Notify all admins about the new request (unless admin made it for themselves)
+      if (!(isAdmin && !selectedUser)) {
+        const adminUserIds = await getAdminUserIds();
+        if (adminUserIds.length > 0) {
+          await notifyAdminNewRequest(requestData, adminUserIds);
+        }
       }
 
-      toast.success('Request submitted successfully!');
+      const successMessage = isAdmin && selectedUser 
+        ? `Request submitted successfully for ${requestForUser.displayName}!`
+        : 'Request submitted successfully!';
+      
+      toast.success(successMessage);
       setSelectedIds([]);
       setReason('');
+      setSelectedUser(null);
     } catch (error) {
       console.error('Error submitting request:', error);
       toast.error('Failed to submit request');
@@ -190,9 +249,67 @@ const RequestPage = () => {
           Request File Access
         </h1>
         <p className="text-gray-600">
-          Search and select participant IDs to request access to their study files
+          {isAdmin 
+            ? "As an admin, you can search and select participant IDs to request access for yourself or other users"
+            : "Search and select participant IDs to request access to their study files"
+          }
         </p>
       </motion.div>
+
+      {/* Admin User Selection */}
+      {isAdmin && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="bg-white/20 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/30 p-6 card-shine"
+        >
+          <h3 className="font-semibold text-white mb-4 flex items-center">
+            <Users className="w-5 h-5 mr-2" />
+            Request for User
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              onClick={() => setSelectedUser(null)}
+              className={`p-4 rounded-lg border-2 transition-all duration-200 flex items-center justify-center ${
+                !selectedUser
+                  ? 'border-blue-500 bg-blue-100/50 text-blue-700'
+                  : 'border-white/30 bg-white/10 text-white hover:bg-white/20'
+              }`}
+            >
+              <UserCheck className="w-5 h-5 mr-2" />
+              Request for Myself
+            </button>
+            
+            <select
+              value={selectedUser?.id || ''}
+              onChange={(e) => {
+                const user = availableUsers.find(u => u.id === e.target.value);
+                setSelectedUser(user || null);
+              }}
+              className="p-4 rounded-lg border-2 border-white/30 bg-white/10 text-white backdrop-blur-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+              disabled={loadingUsers}
+            >
+              <option value="" className="bg-gray-800 text-white">
+                {loadingUsers ? 'Loading users...' : 'Select a user...'}
+              </option>
+              {availableUsers.map(user => (
+                <option key={user.id} value={user.id} className="bg-gray-800 text-white">
+                  {user.displayName} ({user.email})
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          {selectedUser && (
+            <div className="mt-4 p-3 bg-white/20 rounded-lg border border-white/30">
+              <p className="text-white text-sm">
+                <strong>Making request for:</strong> {selectedUser.displayName} ({selectedUser.email})
+              </p>
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* Search Bar */}
       <motion.div
