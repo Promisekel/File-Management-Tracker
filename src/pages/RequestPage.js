@@ -36,9 +36,10 @@ const RequestPage = () => {
     console.log('Auth state changed:', {
       currentUser: currentUser?.email,
       authLoading,
-      uid: currentUser?.uid
+      uid: currentUser?.uid,
+      isAdmin
     });
-  }, [currentUser, authLoading]);
+  }, [currentUser, authLoading, isAdmin]);
 
   // Load available users for admin selection
   useEffect(() => {
@@ -166,16 +167,25 @@ const RequestPage = () => {
       return;
     }
 
-    // For admin requests, check if a user is selected
-    if (isAdmin && !selectedUser && availableUsers.length > 0) {
-      toast.error('Please select a user for this request');
-      return;
+    // For admin requests, if there are available users, they should make a choice
+    // But allow admins to request for themselves even if users list is empty
+    if (isAdmin && availableUsers.length > 0 && selectedUser === null) {
+      // This means admin hasn't selected either themselves or another user
+      // Default to requesting for themselves
+      console.log('Admin defaulting to self-request');
     }
 
     setLoading(true);
     try {
       // Determine who the request is for
       const requestForUser = isAdmin && selectedUser ? selectedUser : currentUser;
+      
+      console.log('Creating request for:', {
+        requestForUser: requestForUser?.email,
+        isAdminRequest: isAdmin && selectedUser,
+        selectedIds,
+        reason: reason.trim()
+      });
       
       // Create the request
       const docRef = await addDoc(collection(db, 'fileRequests'), {
@@ -262,19 +272,19 @@ const RequestPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-white/20 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/30 p-6 card-shine"
+          className="bg-white rounded-xl shadow-lg border border-gray-200 p-6"
         >
-          <h3 className="font-semibold text-white mb-4 flex items-center">
-            <Users className="w-5 h-5 mr-2" />
-            Request for User
+          <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
+            <Users className="w-5 h-5 mr-2 text-blue-600" />
+            Request Mode
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <button
               onClick={() => setSelectedUser(null)}
               className={`p-4 rounded-lg border-2 transition-all duration-200 flex items-center justify-center ${
                 !selectedUser
-                  ? 'border-blue-500 bg-blue-100/50 text-blue-700'
-                  : 'border-white/30 bg-white/10 text-white hover:bg-white/20'
+                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  : 'border-gray-300 bg-gray-50 text-gray-600 hover:bg-gray-100'
               }`}
             >
               <UserCheck className="w-5 h-5 mr-2" />
@@ -287,14 +297,14 @@ const RequestPage = () => {
                 const user = availableUsers.find(u => u.id === e.target.value);
                 setSelectedUser(user || null);
               }}
-              className="p-4 rounded-lg border-2 border-white/30 bg-white/10 text-white backdrop-blur-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+              className="p-4 rounded-lg border-2 border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
               disabled={loadingUsers}
             >
-              <option value="" className="bg-gray-800 text-white">
-                {loadingUsers ? 'Loading users...' : 'Select a user...'}
+              <option value="">
+                {loadingUsers ? 'Loading users...' : 'Request for Another User...'}
               </option>
               {availableUsers.map(user => (
-                <option key={user.id} value={user.id} className="bg-gray-800 text-white">
+                <option key={user.id} value={user.id}>
                   {user.displayName} ({user.email})
                 </option>
               ))}
@@ -302,8 +312,8 @@ const RequestPage = () => {
           </div>
           
           {selectedUser && (
-            <div className="mt-4 p-3 bg-white/20 rounded-lg border border-white/30">
-              <p className="text-white text-sm">
+            <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+              <p className="text-green-800 text-sm">
                 <strong>Making request for:</strong> {selectedUser.displayName} ({selectedUser.email})
               </p>
             </div>
