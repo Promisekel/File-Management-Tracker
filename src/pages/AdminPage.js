@@ -154,12 +154,16 @@ const AdminPage = () => {
 
     setAddingAdmin(true);
     try {
+      console.log('Adding admin:', { email, currentUser: currentUser?.email });
+      
       // Add to adminEmails collection
       await setDoc(doc(db, 'adminEmails', email), {
         email: email,
         addedBy: currentUser.uid,
         addedAt: serverTimestamp()
       });
+
+      console.log('Successfully added to adminEmails');
 
       // Also add to preAddedUsers collection with admin role
       await setDoc(doc(db, 'preAddedUsers', email), {
@@ -170,12 +174,23 @@ const AdminPage = () => {
         addedByName: currentUser.displayName || currentUser.email,
         addedAt: serverTimestamp()
       });
+
+      console.log('Successfully added to preAddedUsers');
       
       toast.success('Admin added successfully!');
       setNewAdminEmail('');
     } catch (error) {
       console.error('Error adding admin:', error);
-      toast.error(`Failed to add admin: ${error.message}`);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      
+      if (error.code === 'permission-denied') {
+        toast.error('Permission denied: You may not have admin privileges');
+      } else if (error.code === 'failed-precondition') {
+        toast.error('Database rules error: Please contact support');
+      } else {
+        toast.error(`Failed to add admin: ${error.message}`);
+      }
     } finally {
       setAddingAdmin(false);
     }
@@ -197,6 +212,8 @@ const AdminPage = () => {
 
     setAddingUser(true);
     try {
+      console.log('Adding user:', { email, role: newUserRole, currentUser: currentUser?.email });
+      
       // Add user to preAddedUsers collection
       await setDoc(doc(db, 'preAddedUsers', email), {
         email: email,
@@ -207,6 +224,8 @@ const AdminPage = () => {
         addedAt: serverTimestamp()
       });
 
+      console.log('Successfully added to preAddedUsers');
+
       // If adding as admin, also add to adminEmails collection
       if (newUserRole === 'admin') {
         await setDoc(doc(db, 'adminEmails', email), {
@@ -214,6 +233,7 @@ const AdminPage = () => {
           addedBy: currentUser.uid,
           addedAt: serverTimestamp()
         });
+        console.log('Successfully added to adminEmails');
       }
       
       toast.success(`${newUserRole === 'admin' ? 'Admin' : 'User'} added successfully!`);
@@ -221,7 +241,16 @@ const AdminPage = () => {
       setNewUserRole('user');
     } catch (error) {
       console.error('Error adding user:', error);
-      toast.error(`Failed to add user: ${error.message}`);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      
+      if (error.code === 'permission-denied') {
+        toast.error('Permission denied: You may not have admin privileges');
+      } else if (error.code === 'failed-precondition') {
+        toast.error('Database rules error: Please contact support');
+      } else {
+        toast.error(`Failed to add user: ${error.message}`);
+      }
     } finally {
       setAddingUser(false);
     }
@@ -292,6 +321,21 @@ const AdminPage = () => {
             <Download className="w-4 h-4 mr-2" />
             Export Data
           </button>
+        </div>
+      </motion.div>
+
+      {/* Debug Info - Temporary */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-white/10 backdrop-blur-lg rounded-xl p-4 border border-white/20"
+      >
+        <h3 className="text-white font-medium mb-2">Debug Info:</h3>
+        <div className="text-white/80 text-sm space-y-1">
+          <p>Current User: {currentUser?.email}</p>
+          <p>Is Admin: {isAdmin ? 'Yes' : 'No'}</p>
+          <p>User ID: {currentUser?.uid}</p>
         </div>
       </motion.div>
 

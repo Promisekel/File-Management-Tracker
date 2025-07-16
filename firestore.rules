@@ -24,20 +24,32 @@ service cloud.firestore {
       allow create: if request.auth != null;
     }
     
-    // Users collection for admin lookup
+    // Users collection for admin lookup and user management
     match /users/{userId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && 
         (request.auth.uid == userId || isAdmin());
+      allow create: if request.auth != null && isAdmin();
+    }
+    
+    // Pre-added users collection - only admins can manage
+    match /preAddedUsers/{email} {
+      allow read: if request.auth != null && isAdmin();
+      allow write: if request.auth != null && isAdmin();
+      allow create: if request.auth != null && isAdmin();
     }
     
     // Admin collections - only admins can access
     match /admins/{userId} {
-      allow read, write: if request.auth != null && isAdmin();
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
+      allow create: if request.auth != null && isAdmin();
     }
     
     match /adminEmails/{email} {
-      allow read, write: if request.auth != null && isAdmin();
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
+      allow create: if request.auth != null && isAdmin();
     }
     
     // Function to check if user is admin
