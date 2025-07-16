@@ -51,17 +51,35 @@ export const AuthProvider = ({ children }) => {
       const adminEmails = ['promisebansah12@gmail.com'];
       const isDesignatedAdmin = adminEmails.includes(user.email);
       
+      // Check if user was pre-added
+      const preAddedUserDoc = await getDoc(doc(db, 'preAddedUsers', user.email));
+      const wasPreAdded = preAddedUserDoc.exists();
+      let preAddedRole = 'user';
+      
+      if (wasPreAdded) {
+        preAddedRole = preAddedUserDoc.data().role;
+        // Update the pre-added user status to 'active' since they've now logged in
+        await setDoc(doc(db, 'preAddedUsers', user.email), {
+          ...preAddedUserDoc.data(),
+          status: 'active',
+          firstLoginAt: serverTimestamp()
+        }, { merge: true });
+      }
+      
+      // Determine final role
+      const userRole = isDesignatedAdmin || preAddedRole === 'admin' ? 'admin' : 'user';
+      
       // Store user in users collection for easy lookups
-      const userRole = isDesignatedAdmin ? 'admin' : 'user';
       await setDoc(doc(db, 'users', user.uid), {
         email: user.email,
         displayName: user.displayName,
         photoURL: user.photoURL,
         role: userRole,
+        wasPreAdded: wasPreAdded,
         lastLogin: serverTimestamp()
       }, { merge: true });
       
-      if (isDesignatedAdmin) {
+      if (isDesignatedAdmin || preAddedRole === 'admin') {
         setIsAdmin(true);
         return;
       }
