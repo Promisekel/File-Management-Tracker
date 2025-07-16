@@ -34,7 +34,7 @@ import toast from 'react-hot-toast';
 import { notifyRequestApproved, notifyRequestRejected, notifyFileReturned } from '../utils/notificationService';
 
 const AdminPage = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, isAdmin } = useAuth();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
