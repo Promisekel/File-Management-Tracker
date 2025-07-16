@@ -48,7 +48,7 @@ const Layout = () => {
         <div className="flex items-center px-6 py-4 border-b border-gray-200">
           <FileText className="w-8 h-8 text-primary-600 mr-3" />
           <div>
-            <h1 className="text-lg font-bold text-gray-900">SMART Tracker</h1>
+            <h1 className="text-lg font-bold text-gray-900">SMART File Tracker</h1>
             <p className="text-xs text-gray-500">Study File Management</p>
           </div>
         </div>
