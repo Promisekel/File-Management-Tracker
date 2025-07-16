@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useNotifications } from './hooks/useNotifications';
+import { motion } from 'framer-motion';
+import { FileText } from 'lucide-react';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
@@ -32,10 +34,31 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
 };
 
 const AppRoutes = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, loading } = useAuth();
   
   // Enable notifications for authenticated users
   useNotifications();
+
+  // Show loading screen while authentication is being initialized
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="text-center"
+        >
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 p-4 flex items-center justify-center">
+            <FileText className="w-8 h-8 text-white" />
+          </div>
+          <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-white mb-2">Loading SMART Tracker</h2>
+          <p className="text-white/70">Checking authentication status...</p>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <Routes>

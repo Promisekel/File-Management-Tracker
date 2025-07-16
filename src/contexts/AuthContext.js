@@ -17,6 +17,7 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   const signInWithGoogle = async () => {
     try {
@@ -31,6 +32,8 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await signOut(auth);
+      setCurrentUser(null);
+      setIsAdmin(false);
     } catch (error) {
       console.error('Error signing out:', error);
       throw error;
@@ -83,9 +86,15 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      await checkAdminStatus(user);
-      setLoading(false);
+      try {
+        setCurrentUser(user);
+        await checkAdminStatus(user);
+      } catch (error) {
+        console.error('Error in auth state change:', error);
+      } finally {
+        setLoading(false);
+        setAuthInitialized(true);
+      }
     });
 
     return unsubscribe;
@@ -96,12 +105,13 @@ export const AuthProvider = ({ children }) => {
     isAdmin,
     signInWithGoogle,
     logout,
-    loading
+    loading,
+    authInitialized
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {authInitialized && children}
     </AuthContext.Provider>
   );
 };
