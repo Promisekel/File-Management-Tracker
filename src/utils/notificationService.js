@@ -1,5 +1,6 @@
 import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import toast from 'react-hot-toast';
 
 // Notification types
 export const NOTIFICATION_TYPES = {
@@ -11,6 +12,50 @@ export const NOTIFICATION_TYPES = {
   FILE_RETURNED: 'file_returned'
 };
 
+// Request notification permission
+export const requestNotificationPermission = async () => {
+  if (!('Notification' in window)) {
+    console.log('This browser does not support notifications');
+    return false;
+  }
+
+  if (Notification.permission === 'granted') {
+    return true;
+  }
+
+  if (Notification.permission !== 'denied') {
+    const permission = await Notification.requestPermission();
+    return permission === 'granted';
+  }
+
+  return false;
+};
+
+// Send browser notification
+export const sendBrowserNotification = (title, options = {}) => {
+  if (Notification.permission === 'granted') {
+    const notification = new Notification(title, {
+      icon: '/manifest.json', // You can add a proper icon path
+      badge: '/manifest.json',
+      tag: 'smart-tracker',
+      requireInteraction: true,
+      ...options
+    });
+
+    // Auto close after 10 seconds if user doesn't interact
+    setTimeout(() => notification.close(), 10000);
+
+    notification.onclick = function(event) {
+      event.preventDefault();
+      window.focus();
+      notification.close();
+    };
+
+    return notification;
+  }
+  return null;
+};
+
 // Create a notification
 export const createNotification = async ({
   userId,
@@ -18,9 +63,11 @@ export const createNotification = async ({
   title,
   message,
   relatedRequestId = null,
-  metadata = {}
+  metadata = {},
+  sendBrowser = true
 }) => {
   try {
+    // Create database notification
     await addDoc(collection(db, 'notifications'), {
       userId,
       type,
@@ -33,6 +80,22 @@ export const createNotification = async ({
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
+
+    // Send browser notification
+    if (sendBrowser) {
+      sendBrowserNotification(title, {
+        body: message,
+        tag: `notification-${type}-${Date.now()}`,
+        data: { type, relatedRequestId, metadata }
+      });
+    }
+
+    // Also show toast notification
+    toast.success(title, {
+      description: message,
+      duration: 5000
+    });
+
   } catch (error) {
     console.error('Error creating notification:', error);
   }

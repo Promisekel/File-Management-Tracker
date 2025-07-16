@@ -6,6 +6,7 @@ import { useNotifications } from './hooks/useNotifications';
 import { motion } from 'framer-motion';
 import { FileText } from 'lucide-react';
 import Layout from './components/Layout';
+import NotificationPermission from './components/NotificationPermission';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import RequestPage from './pages/RequestPage';
@@ -162,6 +163,7 @@ function App() {
       <Router>
         <div className="App">
           <AppRoutes />
+          <NotificationPermission />
           <Toaster 
             position="top-right"
             toastOptions={{
