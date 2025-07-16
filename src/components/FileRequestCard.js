@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Clock, 
   User, 
@@ -9,9 +9,11 @@ import {
   Calendar,
   MoreVertical,
   Check,
-  X
+  X,
+  Trash2,
+  Edit
 } from 'lucide-react';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { formatTimeRemaining, formatDate, isOverdue, getStatusColor } from '../utils/dateUtils';
@@ -20,6 +22,23 @@ import toast from 'react-hot-toast';
 const FileRequestCard = ({ request, showApprovalActions = false }) => {
   const { isAdmin } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const dropdownRef = useRef(null);
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
   
   const statusIcon = {
     pending: Clock,
@@ -71,6 +90,24 @@ const FileRequestCard = ({ request, showApprovalActions = false }) => {
       toast.error('Failed to mark as returned');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteRequest = async () => {
+    if (!window.confirm('Are you sure you want to delete this request? This action cannot be undone.')) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await deleteDoc(doc(db, 'fileRequests', request.id));
+      toast.success('Request deleted successfully!');
+      setShowDropdown(false);
+    } catch (error) {
+      console.error('Error deleting request:', error);
+      toast.error('Failed to delete request');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -198,17 +235,54 @@ const FileRequestCard = ({ request, showApprovalActions = false }) => {
             </motion.button>
           )}
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <MoreVertical className="w-4 h-4 text-gray-500" />
-          </motion.button>
+          <div className="relative" ref={dropdownRef}>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <MoreVertical className="w-4 h-4 text-gray-500" />
+            </motion.button>
+
+            <AnimatePresence>
+              {showDropdown && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  transition={{ duration: 0.1 }}
+                  className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[160px] z-10"
+                >
+                  {isAdmin && (
+                    <button
+                      onClick={handleDeleteRequest}
+                      disabled={deleting}
+                      className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 transition-colors flex items-center text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {deleting ? (
+                        <div className="w-4 h-4 border-2 border-red-300 border-t-red-600 rounded-full animate-spin mr-2" />
+                      ) : (
+                        <Trash2 className="w-4 h-4 mr-2" />
+                      )}
+                      {deleting ? 'Deleting...' : 'Delete Request'}
+                    </button>
+                  )}
+                  
+                  {/* Add more menu items here in the future */}
+                  {!isAdmin && (
+                    <div className="px-4 py-2 text-gray-500 text-sm">
+                      No actions available
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
-      {loading && (
+      {(loading || deleting) && (
         <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
           <div className="w-6 h-6 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
         </div>
