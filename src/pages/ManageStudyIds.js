@@ -136,7 +136,7 @@ const ManageStudyIds = () => {
       const promises = idsToAdd.map(id => 
         addDoc(collection(db, 'studyIds'), {
           participantId: id,
-          description: '',
+          description: newDescription.trim() || '',
           status: 'active',
           category: '',
           notes: '',
@@ -149,6 +149,7 @@ const ManageStudyIds = () => {
 
       await Promise.all(promises);
       setBulkIds('');
+      setNewDescription('');
       setShowBulkAdd(false);
       toast.success(`${idsToAdd.length} study IDs added successfully!`);
     } catch (error) {
@@ -535,20 +536,22 @@ const ManageStudyIds = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-xl p-6 w-full max-w-lg mx-4"
+              className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
             >
-              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <FileText className="w-5 h-5 mr-2 text-primary-600" />
-                Bulk Add Study IDs
-              </h3>
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-xl">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <FileText className="w-5 h-5 mr-2 text-primary-600" />
+                  Bulk Add Study IDs
+                </h3>
+              </div>
               
-              <div className="space-y-6">
+              <div className="p-6 space-y-6">
                 {/* Instructions */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <div className="flex items-start space-x-3">
@@ -561,6 +564,7 @@ const ManageStudyIds = () => {
                         <li>• Duplicates will be automatically skipped</li>
                         <li>• Invalid or empty lines will be ignored</li>
                         <li>• You can paste from Excel, CSV, or any text source</li>
+                        <li>• Add an optional description that applies to all IDs</li>
                       </ul>
                     </div>
                   </div>
@@ -589,48 +593,85 @@ const ManageStudyIds = () => {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Participant IDs (one per line)
-                  </label>
-                  <textarea
-                    value={bulkIds}
-                    onChange={(e) => setBulkIds(e.target.value)}
-                    placeholder={`PART-001\nPART-002\nPART-003\nSUB-004\nSTUDY-005`}
-                    rows={10}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none font-mono text-sm"
-                  />
-                  <div className="flex items-center justify-between mt-2">
-                    <p className="text-xs text-gray-500">
-                      {bulkIds.split('\n').filter(id => id.trim()).length} IDs ready to add
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Participant IDs Input */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Participant IDs (one per line) *
+                    </label>
+                    <textarea
+                      value={bulkIds}
+                      onChange={(e) => setBulkIds(e.target.value)}
+                      placeholder={`PART-001\nPART-002\nPART-003\nSUB-004\nSTUDY-005`}
+                      rows={12}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none font-mono text-sm"
+                    />
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-xs text-gray-500">
+                        {bulkIds.split('\n').filter(id => id.trim()).length} IDs ready to add
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setBulkIds('')}
+                        className="text-xs text-gray-400 hover:text-gray-600"
+                      >
+                        Clear all
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Description Input */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Description (Optional)
+                    </label>
+                    <textarea
+                      value={newDescription}
+                      onChange={(e) => setNewDescription(e.target.value)}
+                      placeholder="Enter a description that will be applied to all participant IDs..."
+                      rows={12}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                      This description will be added to all participant IDs in the list
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => setBulkIds('')}
-                      className="text-xs text-gray-400 hover:text-gray-600"
-                    >
-                      Clear all
-                    </button>
                   </div>
                 </div>
+
+                {/* Preview Section */}
+                {bulkIds.trim() && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 className="font-medium text-green-900 mb-2">Preview:</h4>
+                    <p className="text-sm text-green-800">
+                      Ready to add <strong>{bulkIds.split('\n').filter(id => id.trim()).length} participant IDs</strong>
+                      {newDescription.trim() && (
+                        <span> with description: "<em>{newDescription.trim()}</em>"</span>
+                      )}
+                    </p>
+                  </div>
+                )}
               </div>
 
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  onClick={() => {
-                    setShowBulkAdd(false);
-                    setBulkIds('');
-                  }}
-                  className="btn-secondary"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleBulkAdd}
-                  className="btn-primary"
-                >
-                  Add All IDs
-                </button>
+              <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 rounded-b-xl">
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => {
+                      setShowBulkAdd(false);
+                      setBulkIds('');
+                      setNewDescription('');
+                    }}
+                    className="btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleBulkAdd}
+                    disabled={!bulkIds.trim()}
+                    className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Add All IDs
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>
