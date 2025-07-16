@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, 
   Plus, 
@@ -8,7 +8,9 @@ import {
   History, 
   LogOut,
   FileText,
-  Database
+  Database,
+  Menu,
+  X
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationCenter from './NotificationCenter';
@@ -16,6 +18,7 @@ import NotificationCenter from './NotificationCenter';
 const Layout = () => {
   const { currentUser, isAdmin, logout } = useAuth();
   const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navigationItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -36,13 +39,48 @@ const Layout = () => {
     }
   };
 
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Mobile Menu Button */}
+      <div className="md:hidden fixed top-4 left-4 z-[60]">
+        <button
+          onClick={toggleMobileMenu}
+          className="p-2 bg-white rounded-lg shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors duration-200"
+        >
+          {isMobileMenuOpen ? (
+            <X className="w-6 h-6 text-gray-600" />
+          ) : (
+            <Menu className="w-6 h-6 text-gray-600" />
+          )}
+        </button>
+      </div>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeMobileMenu}
+            className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Sidebar */}
-      <motion.div
-        initial={{ x: -250 }}
-        animate={{ x: 0 }}
-        className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg"
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${
+          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        } md:translate-x-0`}
       >
         {/* Logo */}
         <div className="flex items-center px-6 py-4 border-b border-gray-200">
@@ -83,6 +121,7 @@ const Layout = () => {
                 <li key={item.path}>
                   <NavLink
                     to={item.path}
+                    onClick={closeMobileMenu}
                     className={`
                       group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200
                       ${isActive 
@@ -110,14 +149,14 @@ const Layout = () => {
             Sign Out
           </button>
         </div>
-      </motion.div>
+      </div>
 
       {/* Main Content */}
-      <div className="ml-64">
+      <div className="md:ml-64 transition-all duration-300">
         {/* Top Bar */}
-        <div className="bg-white border-b border-gray-200 px-8 py-4">
+        <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-4">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="ml-12 md:ml-0">
               <h2 className="text-lg font-semibold text-gray-900">
                 {navigationItems.find(item => item.path === location.pathname)?.label || 'Dashboard'}
               </h2>
@@ -127,7 +166,7 @@ const Layout = () => {
             </div>
             <div className="flex items-center space-x-4">
               <NotificationCenter />
-              <div className="flex items-center">
+              <div className="hidden sm:flex items-center">
                 <img
                   src={currentUser?.photoURL || 'https://via.placeholder.com/32'}
                   alt="User Avatar"
@@ -141,7 +180,7 @@ const Layout = () => {
           </div>
         </div>
 
-        <main className="px-8 py-6">
+        <main className="px-4 md:px-8 py-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
