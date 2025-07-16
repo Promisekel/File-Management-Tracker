@@ -30,6 +30,11 @@ const RequestPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [availableUsers, setAvailableUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  
+  // Manual user entry states (for users not in system)
+  const [manualUserName, setManualUserName] = useState('');
+  const [manualUserEmail, setManualUserEmail] = useState('');
+  const [requestMode, setRequestMode] = useState('self'); // 'self', 'existing_user', 'manual_user'
 
   // Debug authentication state
   useEffect(() => {
@@ -167,29 +172,58 @@ const RequestPage = () => {
       return;
     }
 
-    // For admin requests, if there are available users, they should make a choice
-    // But allow admins to request for themselves even if users list is empty
-    if (isAdmin && availableUsers.length > 0 && selectedUser === null) {
-      // This means admin hasn't selected either themselves or another user
-      // Default to requesting for themselves
-      console.log('Admin defaulting to self-request');
+    // Validation for admin requests
+    if (isAdmin && requestMode === 'manual_user') {
+      if (!manualUserName.trim()) {
+        toast.error('Please enter the user\'s name');
+        return;
+      }
+      if (!manualUserEmail.trim()) {
+        toast.error('Please enter the user\'s email');
+        return;
+      }
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(manualUserEmail)) {
+        toast.error('Please enter a valid email address');
+        return;
+      }
     }
 
     setLoading(true);
     try {
-      // Determine who the request is for
-      const requestForUser = isAdmin && selectedUser ? selectedUser : currentUser;
+      // Determine who the request is for based on mode
+      let requestForUser;
+      let isManualUser = false;
+      
+      if (isAdmin && requestMode === 'manual_user') {
+        // Manual user entry
+        requestForUser = {
+          email: manualUserEmail.trim(),
+          displayName: manualUserName.trim(),
+          uid: manualUserEmail.trim(), // Use email as temporary ID for manual users
+          isManualEntry: true
+        };
+        isManualUser = true;
+      } else if (isAdmin && requestMode === 'existing_user' && selectedUser) {
+        // Existing user selection
+        requestForUser = selectedUser;
+      } else {
+        // Self request (admin or regular user)
+        requestForUser = currentUser;
+      }
       
       console.log('Creating request for:', {
         requestForUser: requestForUser?.email,
-        isAdminRequest: isAdmin && selectedUser,
+        requestMode,
+        isManualUser,
         selectedIds,
         reason: reason.trim()
       });
       
       // Create the request
-      const docRef = await addDoc(collection(db, 'fileRequests'), {
-        userId: requestForUser.uid || requestForUser.id,
+      const requestData = {
+        userId: requestForUser.uid,
         userEmail: requestForUser.email,
         userName: requestForUser.displayName,
         participantIds: selectedIds,
@@ -198,47 +232,54 @@ const RequestPage = () => {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         // Add admin info if this is an admin request for another user
-        ...(isAdmin && selectedUser && {
+        ...(isAdmin && (requestMode === 'existing_user' || requestMode === 'manual_user') && {
           requestedByAdmin: true,
           adminId: currentUser.uid,
           adminEmail: currentUser.email,
-          adminName: currentUser.displayName
+          adminName: currentUser.displayName,
+          ...(isManualUser && { isManualUserEntry: true })
         })
-      });
+      };
+
+      const docRef = await addDoc(collection(db, 'fileRequests'), requestData);
 
       // Create notifications
-      const requestData = {
+      const notificationData = {
         id: docRef.id,
-        userId: requestForUser.uid || requestForUser.id,
-        userEmail: requestForUser.email,
-        userName: requestForUser.displayName,
-        participantIds: selectedIds,
-        reason: reason.trim(),
-        ...(isAdmin && selectedUser && {
+        ...requestData,
+        ...(isAdmin && (requestMode === 'existing_user' || requestMode === 'manual_user') && {
           requestedByAdmin: true,
           adminName: currentUser.displayName
         })
       };
 
       // Notify the user that their request was submitted (or admin if admin made it)
-      await notifyRequestSubmitted(requestData);
+      await notifyRequestSubmitted(notificationData);
 
       // Notify all admins about the new request (unless admin made it for themselves)
-      if (!(isAdmin && !selectedUser)) {
+      if (!(isAdmin && requestMode === 'self')) {
         const adminUserIds = await getAdminUserIds();
         if (adminUserIds.length > 0) {
-          await notifyAdminNewRequest(requestData, adminUserIds);
+          await notifyAdminNewRequest(notificationData, adminUserIds);
         }
       }
 
-      const successMessage = isAdmin && selectedUser 
-        ? `Request submitted successfully for ${requestForUser.displayName}!`
-        : 'Request submitted successfully!';
+      let successMessage = 'Request submitted successfully!';
+      if (isAdmin && requestMode === 'existing_user') {
+        successMessage = `Request submitted successfully for ${requestForUser.displayName}!`;
+      } else if (isAdmin && requestMode === 'manual_user') {
+        successMessage = `Request submitted successfully for ${manualUserName}!`;
+      }
       
       toast.success(successMessage);
+      
+      // Reset form
       setSelectedIds([]);
       setReason('');
       setSelectedUser(null);
+      setManualUserName('');
+      setManualUserEmail('');
+      setRequestMode('self');
     } catch (error) {
       console.error('Error submitting request:', error);
       toast.error('Failed to submit request');
@@ -278,11 +319,18 @@ const RequestPage = () => {
             <Users className="w-5 h-5 mr-2 text-blue-600" />
             Request Mode
           </h3>
-          <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4">
+          
+          {/* Request Mode Selection */}
+          <div className="space-y-3 mb-4">
             <button
-              onClick={() => setSelectedUser(null)}
+              onClick={() => {
+                setRequestMode('self');
+                setSelectedUser(null);
+                setManualUserName('');
+                setManualUserEmail('');
+              }}
               className={`w-full p-3 sm:p-4 rounded-lg border-2 transition-all duration-200 flex items-center justify-center text-sm sm:text-base ${
-                !selectedUser
+                requestMode === 'self'
                   ? 'border-blue-500 bg-blue-50 text-blue-700'
                   : 'border-gray-300 bg-gray-50 text-gray-600 hover:bg-gray-100'
               }`}
@@ -291,31 +339,101 @@ const RequestPage = () => {
               Request for Myself
             </button>
             
-            <select
-              value={selectedUser?.id || ''}
-              onChange={(e) => {
-                const user = availableUsers.find(u => u.id === e.target.value);
-                setSelectedUser(user || null);
+            <button
+              onClick={() => {
+                setRequestMode('existing_user');
+                setManualUserName('');
+                setManualUserEmail('');
               }}
-              className="w-full p-3 sm:p-4 rounded-lg border-2 border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm sm:text-base"
-              disabled={loadingUsers}
+              className={`w-full p-3 sm:p-4 rounded-lg border-2 transition-all duration-200 flex items-center justify-center text-sm sm:text-base ${
+                requestMode === 'existing_user'
+                  ? 'border-green-500 bg-green-50 text-green-700'
+                  : 'border-gray-300 bg-gray-50 text-gray-600 hover:bg-gray-100'
+              }`}
             >
-              <option value="">
-                {loadingUsers ? 'Loading users...' : 'Request for Another User...'}
-              </option>
-              {availableUsers.map(user => (
-                <option key={user.id} value={user.id}>
-                  {user.displayName} ({user.email})
-                </option>
-              ))}
-            </select>
+              <Users className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+              Request for Existing User
+            </button>
+            
+            <button
+              onClick={() => {
+                setRequestMode('manual_user');
+                setSelectedUser(null);
+              }}
+              className={`w-full p-3 sm:p-4 rounded-lg border-2 transition-all duration-200 flex items-center justify-center text-sm sm:text-base ${
+                requestMode === 'manual_user'
+                  ? 'border-purple-500 bg-purple-50 text-purple-700'
+                  : 'border-gray-300 bg-gray-50 text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <FileText className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+              Request for Anyone (Enter Details)
+            </button>
           </div>
-          
-          {selectedUser && (
-            <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
-              <p className="text-green-800 text-xs sm:text-sm">
-                <strong>Making request for:</strong> {selectedUser.displayName} ({selectedUser.email})
-              </p>
+
+          {/* Existing User Selection */}
+          {requestMode === 'existing_user' && (
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">
+                Select User:
+              </label>
+              <select
+                value={selectedUser?.id || ''}
+                onChange={(e) => {
+                  const user = availableUsers.find(u => u.id === e.target.value);
+                  setSelectedUser(user || null);
+                }}
+                className="w-full p-3 rounded-lg border-2 border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-green-400 focus:border-green-400 text-sm sm:text-base"
+                disabled={loadingUsers}
+              >
+                <option value="">
+                  {loadingUsers ? 'Loading users...' : 'Select a user...'}
+                </option>
+                {availableUsers.map(user => (
+                  <option key={user.id} value={user.id}>
+                    {user.displayName} ({user.email})
+                  </option>
+                ))}
+              </select>
+              
+              {selectedUser && (
+                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                  <p className="text-green-800 text-xs sm:text-sm">
+                    <strong>Making request for:</strong> {selectedUser.displayName} ({selectedUser.email})
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Manual User Entry */}
+          {requestMode === 'manual_user' && (
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">
+                Enter User Details:
+              </label>
+              <input
+                type="text"
+                value={manualUserName}
+                onChange={(e) => setManualUserName(e.target.value)}
+                placeholder="Enter user's full name"
+                className="w-full p-3 rounded-lg border-2 border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 text-sm sm:text-base"
+              />
+              <input
+                type="email"
+                value={manualUserEmail}
+                onChange={(e) => setManualUserEmail(e.target.value)}
+                placeholder="Enter user's email address"
+                className="w-full p-3 rounded-lg border-2 border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 text-sm sm:text-base"
+              />
+              
+              {manualUserName && manualUserEmail && (
+                <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                  <p className="text-purple-800 text-xs sm:text-sm">
+                    <strong>Making request for:</strong> {manualUserName} ({manualUserEmail})
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </motion.div>
