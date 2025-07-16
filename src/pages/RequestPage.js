@@ -46,29 +46,79 @@ const RequestPage = () => {
     });
   }, [currentUser, authLoading, isAdmin]);
 
-  // Load available users for admin selection
+  // Load available users for admin selection (both regular users and pre-added users)
   useEffect(() => {
     if (!isAdmin) return;
 
     setLoadingUsers(true);
+    
+    // Set up listeners for both collections
     const usersQuery = query(
       collection(db, 'users'),
       orderBy('displayName', 'asc')
     );
+    
+    const preAddedUsersQuery = query(
+      collection(db, 'preAddedUsers'),
+      orderBy('displayName', 'asc')
+    );
 
-    const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
-      const usersData = snapshot.docs.map(doc => ({
+    let regularUsers = [];
+    let preAddedUsers = [];
+    let unsubscribeCount = 0;
+    
+    const updateCombinedUsers = () => {
+      // Combine both arrays and remove duplicates based on email
+      const allUsers = [...regularUsers, ...preAddedUsers];
+      const uniqueUsers = allUsers.filter((user, index, self) => 
+        index === self.findIndex(u => u.email === user.email)
+      );
+      
+      // Sort by display name
+      uniqueUsers.sort((a, b) => a.displayName.localeCompare(b.displayName));
+      
+      setAvailableUsers(uniqueUsers);
+      if (unsubscribeCount === 2) {
+        setLoadingUsers(false);
+      }
+    };
+
+    const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
+      regularUsers = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        source: 'users'
       }));
-      setAvailableUsers(usersData);
-      setLoadingUsers(false);
+      unsubscribeCount++;
+      updateCombinedUsers();
     }, (error) => {
       console.error('Error fetching users:', error);
-      setLoadingUsers(false);
+      unsubscribeCount++;
+      if (unsubscribeCount === 2) {
+        setLoadingUsers(false);
+      }
     });
 
-    return unsubscribe;
+    const unsubscribePreAddedUsers = onSnapshot(preAddedUsersQuery, (snapshot) => {
+      preAddedUsers = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        source: 'preAddedUsers'
+      }));
+      unsubscribeCount++;
+      updateCombinedUsers();
+    }, (error) => {
+      console.error('Error fetching pre-added users:', error);
+      unsubscribeCount++;
+      if (unsubscribeCount === 2) {
+        setLoadingUsers(false);
+      }
+    });
+
+    return () => {
+      unsubscribeUsers();
+      unsubscribePreAddedUsers();
+    };
   }, [isAdmin]);
 
   // Get available study IDs from database
@@ -390,8 +440,9 @@ const RequestPage = () => {
                   {loadingUsers ? 'Loading users...' : 'Select a user...'}
                 </option>
                 {availableUsers.map(user => (
-                  <option key={user.id} value={user.id}>
+                  <option key={`${user.source}-${user.id}`} value={user.id}>
                     {user.displayName} ({user.email})
+                    {user.source === 'preAddedUsers' ? ' - Pre-added' : ''}
                   </option>
                 ))}
               </select>
@@ -400,6 +451,11 @@ const RequestPage = () => {
                 <div className="p-3 bg-green-50 rounded-lg border border-green-200">
                   <p className="text-green-800 text-xs sm:text-sm">
                     <strong>Making request for:</strong> {selectedUser.displayName} ({selectedUser.email})
+                    {selectedUser.source === 'preAddedUsers' && (
+                      <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
+                        Pre-added User
+                      </span>
+                    )}
                   </p>
                 </div>
               )}
