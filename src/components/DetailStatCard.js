@@ -41,19 +41,55 @@ const DetailStatCard = ({ title, value, icon: Icon, color, delay = 0 }) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
-      className={`relative overflow-hidden rounded-xl p-6 border shadow-lg backdrop-blur-sm ${theme.card}`}
+      whileHover={{ 
+        scale: 1.05, 
+        y: -8,
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+      }}
+      transition={{ 
+        delay,
+        duration: 0.3,
+        type: "spring",
+        stiffness: 300,
+        damping: 20
+      }}
+      className={`relative overflow-hidden rounded-2xl p-8 border shadow-xl backdrop-blur-sm ${theme.card}`}
+      style={{
+        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+      }}
     >
-      {/* Subtle shine effect */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent pointer-events-none"></div>
+      {/* Enhanced shine effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none"></div>
+      <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-white/15 to-transparent rounded-full blur-xl"></div>
       
-      <div className="relative flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-700 mb-1">{title}</p>
-          <p className={`text-2xl font-bold ${theme.text}`}>{value}</p>
+      <div className="relative flex flex-col h-full">
+        {/* Icon positioned at top right */}
+        <div className="flex justify-end mb-4">
+          <motion.div 
+            whileHover={{ rotate: 10, scale: 1.1 }}
+            transition={{ duration: 0.2 }}
+            className={`p-4 rounded-2xl shadow-lg backdrop-blur-sm ${theme.icon}`}
+          >
+            <Icon className="w-7 h-7" />
+          </motion.div>
         </div>
-        <div className={`p-4 rounded-xl shadow-md ${theme.icon}`}>
-          <Icon className="w-6 h-6" />
+        
+        {/* Content pushed towards bottom */}
+        <div className="flex-1 flex flex-col justify-end">
+          <motion.p 
+            className="text-lg font-semibold text-gray-700 mb-2"
+            whileHover={{ x: 2 }}
+            transition={{ duration: 0.2 }}
+          >
+            {title}
+          </motion.p>
+          <motion.p 
+            className={`text-5xl font-bold leading-none ${theme.text}`}
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.2 }}
+          >
+            {value}
+          </motion.p>
         </div>
       </div>
     </motion.div>
