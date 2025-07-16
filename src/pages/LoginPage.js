@@ -22,12 +22,12 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 flex items-center justify-center px-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8"
+        className="max-w-md w-full bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 p-8 card-shine"
       >
         {/* Logo and Title */}
         <div className="text-center mb-8">
@@ -37,12 +37,14 @@ const LoginPage = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="inline-block"
           >
-            <FileText className="w-16 h-16 text-primary-600 mx-auto mb-4" />
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 p-4 flex items-center justify-center">
+              <FileText className="w-8 h-8 text-white" />
+            </div>
           </motion.div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-white mb-2">
             SMART Tracker
           </h1>
-          <p className="text-gray-600">
+          <p className="text-white/80">
             Study File Management System
           </p>
         </div>
@@ -54,10 +56,10 @@ const LoginPage = () => {
           transition={{ duration: 0.5, delay: 0.3 }}
           className="mb-8"
         >
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          <h2 className="text-xl font-semibold text-white mb-2">
             Welcome Back
           </h2>
-          <p className="text-gray-600">
+          <p className="text-white/70">
             Sign in with your Google account to access the file tracking system.
           </p>
         </motion.div>
@@ -70,13 +72,14 @@ const LoginPage = () => {
           onClick={handleGoogleSignIn}
           disabled={loading}
           className={`
-            w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg shadow-sm 
-            bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-200
-            ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'}
+            w-full flex items-center justify-center px-4 py-3 rounded-lg shadow-lg 
+            bg-gradient-to-r from-white/20 to-white/10 backdrop-blur-sm border border-white/30
+            text-sm font-medium text-white hover:from-white/30 hover:to-white/20 transition-all duration-200
+            ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-xl hover:-translate-y-0.5'}
           `}
         >
           {loading ? (
-            <div className="w-5 h-5 border-2 border-gray-300 border-t-primary-600 rounded-full animate-spin mr-3" />
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-3" />
           ) : (
             <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
               <path
@@ -105,24 +108,24 @@ const LoginPage = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.6 }}
-          className="mt-8 pt-8 border-t border-gray-200"
+          className="mt-8 pt-8 border-t border-white/20"
         >
-          <h3 className="text-sm font-medium text-gray-900 mb-4">Features:</h3>
-          <ul className="space-y-2 text-sm text-gray-600">
+          <h3 className="text-sm font-medium text-white mb-4">Features:</h3>
+          <ul className="space-y-2 text-sm text-white/70">
             <li className="flex items-center">
-              <div className="w-2 h-2 bg-primary-600 rounded-full mr-3"></div>
+              <div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full mr-3"></div>
               Track file requests and returns
             </li>
             <li className="flex items-center">
-              <div className="w-2 h-2 bg-primary-600 rounded-full mr-3"></div>
+              <div className="w-2 h-2 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full mr-3"></div>
               24-hour countdown monitoring
             </li>
             <li className="flex items-center">
-              <div className="w-2 h-2 bg-primary-600 rounded-full mr-3"></div>
+              <div className="w-2 h-2 bg-gradient-to-r from-pink-400 to-rose-500 rounded-full mr-3"></div>
               Complete request history
             </li>
             <li className="flex items-center">
-              <div className="w-2 h-2 bg-primary-600 rounded-full mr-3"></div>
+              <div className="w-2 h-2 bg-gradient-to-r from-indigo-400 to-blue-500 rounded-full mr-3"></div>
               Admin approval workflow
             </li>
           </ul>

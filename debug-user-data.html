@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug User Data</title>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+</head>
+<body>
+    <h1>Firebase User Data Debug</h1>
+    <button onclick="signInWithGoogle()">Sign In with Google</button>
+    <button onclick="checkUserData()">Check User Data</button>
+    <div id="output"></div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBQ8094jCo8OlGWySkuFcmcO4JUXbtUAAg",
+            authDomain: "smart-pro24.firebaseapp.com",
+            databaseURL: "https://smart-pro24-default-rtdb.firebaseio.com",
+            projectId: "smart-pro24",
+            storageBucket: "smart-pro24.firebasestorage.app",
+            messagingSenderId: "986473364599",
+            appId: "1:986473364599:web:a8c437a3ac2da633bf9a72"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        async function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            try {
+                const result = await auth.signInWithPopup(provider);
+                document.getElementById('output').innerHTML = `Signed in as: ${result.user.email}`;
+            } catch (error) {
+                document.getElementById('output').innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function checkUserData() {
+            const user = auth.currentUser;
+            if (!user) {
+                document.getElementById('output').innerHTML = 'Please sign in first';
+                return;
+            }
+
+            try {
+                const snapshot = await db.collection('fileRequests')
+                    .where('userId', '==', user.uid)
+                    .get();
+                
+                const output = document.getElementById('output');
+                output.innerHTML = `
+                    <h3>User: ${user.email}</h3>
+                    <h3>UID: ${user.uid}</h3>
+                    <h3>Found ${snapshot.size} requests</h3>
+                `;
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    output.innerHTML += `
+                        <div style="border: 1px solid #ccc; margin: 10px; padding: 10px;">
+                            <strong>ID:</strong> ${doc.id}<br>
+                            <strong>Status:</strong> ${data.status}<br>
+                            <strong>User ID:</strong> ${data.userId}<br>
+                            <strong>Created:</strong> ${data.createdAt?.toDate()}<br>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                document.getElementById('output').innerHTML = `Error checking data: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
