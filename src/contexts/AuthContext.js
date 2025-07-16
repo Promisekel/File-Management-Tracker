@@ -47,9 +47,30 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
+      console.log('Checking admin status for:', user.email); // Debug log
+      
       // Check if user email is the designated admin
       const adminEmails = ['promisebansah12@gmail.com'];
       const isDesignatedAdmin = adminEmails.includes(user.email);
+      
+      console.log('Is designated admin:', isDesignatedAdmin); // Debug log
+      
+      // If user is designated admin, set admin immediately
+      if (isDesignatedAdmin) {
+        setIsAdmin(true);
+        console.log('Set as admin - designated admin'); // Debug log
+        
+        // Still store user data
+        await setDoc(doc(db, 'users', user.uid), {
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          role: 'admin',
+          isDesignatedAdmin: true,
+          lastLogin: serverTimestamp()
+        }, { merge: true });
+        return;
+      }
       
       // Check if user was pre-added
       const preAddedUserDoc = await getDoc(doc(db, 'preAddedUsers', user.email));
@@ -64,10 +85,15 @@ export const AuthProvider = ({ children }) => {
           status: 'active',
           firstLoginAt: serverTimestamp()
         }, { merge: true });
+        
+        if (preAddedRole === 'admin') {
+          setIsAdmin(true);
+          console.log('Set as admin - pre-added admin'); // Debug log
+        }
       }
       
       // Determine final role
-      const userRole = isDesignatedAdmin || preAddedRole === 'admin' ? 'admin' : 'user';
+      const userRole = preAddedRole === 'admin' ? 'admin' : 'user';
       
       // Store user in users collection for easy lookups
       await setDoc(doc(db, 'users', user.uid), {
@@ -79,11 +105,6 @@ export const AuthProvider = ({ children }) => {
         lastLogin: serverTimestamp()
       }, { merge: true });
       
-      if (isDesignatedAdmin || preAddedRole === 'admin') {
-        setIsAdmin(true);
-        return;
-      }
-      
       // Also check Firestore admins collection for additional admins
       const adminDoc = await getDoc(doc(db, 'admins', user.uid));
       const isAdditionalAdmin = adminDoc.exists();
@@ -93,9 +114,12 @@ export const AuthProvider = ({ children }) => {
         await setDoc(doc(db, 'users', user.uid), {
           role: 'admin'
         }, { merge: true });
+        setIsAdmin(true);
+        console.log('Set as admin - additional admin'); // Debug log
+      } else if (!wasPreAdded || preAddedRole !== 'admin') {
+        setIsAdmin(false);
+        console.log('Set as regular user'); // Debug log
       }
-      
-      setIsAdmin(isAdditionalAdmin);
     } catch (error) {
       console.error('Error checking admin status:', error);
       setIsAdmin(false);
