@@ -90,18 +90,39 @@ const AdminPage = () => {
 
   // Load pre-added users
   useEffect(() => {
+    console.log('Setting up users listener...');
+    // Remove orderBy temporarily to avoid index issues
     const usersQuery = query(
-      collection(db, 'preAddedUsers'),
-      orderBy('addedAt', 'desc')
+      collection(db, 'preAddedUsers')
+      // orderBy('addedAt', 'desc') // Temporarily commented out
     );
 
     const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
+      console.log('Users snapshot received:', {
+        size: snapshot.size,
+        empty: snapshot.empty,
+        docs: snapshot.docs.length
+      });
+      
       const usersData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+      
+      // Sort in JavaScript instead
+      usersData.sort((a, b) => {
+        const aTime = a.addedAt?.toDate?.() || new Date(0);
+        const bTime = b.addedAt?.toDate?.() || new Date(0);
+        return bTime - aTime;
+      });
+      
+      console.log('Processed users data:', usersData);
       setPreAddedUsers(usersData);
       setLoadingUsers(false);
+    }, (error) => {
+      console.error('Error in users listener:', error);
+      setLoadingUsers(false);
+      toast.error('Failed to load users: ' + error.message);
     });
 
     return unsubscribe;
@@ -253,6 +274,39 @@ const AdminPage = () => {
       }
     } finally {
       setAddingUser(false);
+    }
+  };
+
+  const refreshUsers = () => {
+    console.log('Manually refreshing users...');
+    setLoadingUsers(true);
+    // The useEffect listener should automatically update when data changes
+    // But let's force a manual check
+    try {
+      const usersQuery = query(collection(db, 'preAddedUsers'));
+      onSnapshot(usersQuery, (snapshot) => {
+        const usersData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        usersData.sort((a, b) => {
+          const aTime = a.addedAt?.toDate?.() || new Date(0);
+          const bTime = b.addedAt?.toDate?.() || new Date(0);
+          return bTime - aTime;
+        });
+        console.log('Manual refresh - users data:', usersData);
+        setPreAddedUsers(usersData);
+        setLoadingUsers(false);
+        toast.success('Users list refreshed!');
+      }, (error) => {
+        console.error('Error in manual refresh:', error);
+        setLoadingUsers(false);
+        toast.error('Failed to refresh users');
+      });
+    } catch (error) {
+      console.error('Error setting up manual refresh:', error);
+      setLoadingUsers(false);
+      toast.error('Failed to refresh users');
     }
   };
 
@@ -494,10 +548,20 @@ const AdminPage = () => {
         transition={{ delay: 0.25 }}
         className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 p-6 card-shine"
       >
-        <h3 className="font-semibold text-white mb-4 flex items-center">
-          <Users className="w-5 h-5 mr-2" />
-          Pre-Added Users ({preAddedUsers.length})
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-white flex items-center">
+            <Users className="w-5 h-5 mr-2" />
+            Pre-Added Users ({preAddedUsers.length})
+          </h3>
+          <button
+            onClick={refreshUsers}
+            disabled={loadingUsers}
+            className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 disabled:opacity-50"
+            title="Refresh users list"
+          >
+            <RefreshCw className={`w-4 h-4 ${loadingUsers ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
         
         {loadingUsers ? (
           <div className="flex justify-center py-8">
