@@ -43,7 +43,7 @@ const AppRoutes = () => {
   // Show loading screen while authentication is being initialized
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-700 via-purple-700 to-indigo-700 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-400 via-purple-400 to-indigo-400 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}

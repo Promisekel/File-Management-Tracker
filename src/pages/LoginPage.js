@@ -22,12 +22,12 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-purple-700 to-indigo-700 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-400 via-purple-400 to-indigo-400 flex items-center justify-center px-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="max-w-md w-full bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 p-8 card-shine"
+        className="max-w-md w-full bg-white/20 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/30 p-8 card-shine"
       >
         {/* Logo and Title */}
         <div className="text-center mb-8">

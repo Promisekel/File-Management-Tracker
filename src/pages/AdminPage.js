@@ -264,7 +264,7 @@ const AdminPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-purple-700 to-indigo-700 space-y-6 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-400 via-purple-400 to-indigo-400 space-y-6 p-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
