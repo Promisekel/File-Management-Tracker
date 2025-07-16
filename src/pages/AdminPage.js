@@ -22,7 +22,8 @@ import {
   doc, 
   updateDoc, 
   serverTimestamp,
-  setDoc
+  setDoc,
+  deleteDoc
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
@@ -138,73 +139,89 @@ const AdminPage = () => {
   });
 
   const handleAddAdmin = async () => {
-    if (!newAdminEmail.trim()) {
+    const email = newAdminEmail.trim();
+    if (!email) {
       toast.error('Please enter an email address');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address');
       return;
     }
 
     setAddingAdmin(true);
     try {
       // Add to adminEmails collection
-      await setDoc(doc(db, 'adminEmails', newAdminEmail.trim()), {
-        email: newAdminEmail.trim(),
+      await setDoc(doc(db, 'adminEmails', email), {
+        email: email,
         addedBy: currentUser.uid,
         addedAt: serverTimestamp()
       });
 
       // Also add to preAddedUsers collection with admin role
-      await setDoc(doc(db, 'preAddedUsers', newAdminEmail.trim()), {
-        email: newAdminEmail.trim(),
+      await setDoc(doc(db, 'preAddedUsers', email), {
+        email: email,
         role: 'admin',
         status: 'pre-added',
         addedBy: currentUser.uid,
-        addedByName: currentUser.displayName,
+        addedByName: currentUser.displayName || currentUser.email,
         addedAt: serverTimestamp()
       });
       
-      toast.success('Admin added successfully');
+      toast.success('Admin added successfully!');
       setNewAdminEmail('');
     } catch (error) {
       console.error('Error adding admin:', error);
-      toast.error('Failed to add admin');
+      toast.error(`Failed to add admin: ${error.message}`);
     } finally {
       setAddingAdmin(false);
     }
   };
 
   const handleAddUser = async () => {
-    if (!newUserEmail.trim()) {
+    const email = newUserEmail.trim();
+    if (!email) {
       toast.error('Please enter an email address');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address');
       return;
     }
 
     setAddingUser(true);
     try {
       // Add user to preAddedUsers collection
-      await setDoc(doc(db, 'preAddedUsers', newUserEmail.trim()), {
-        email: newUserEmail.trim(),
+      await setDoc(doc(db, 'preAddedUsers', email), {
+        email: email,
         role: newUserRole,
         status: 'pre-added',
         addedBy: currentUser.uid,
-        addedByName: currentUser.displayName,
+        addedByName: currentUser.displayName || currentUser.email,
         addedAt: serverTimestamp()
       });
 
       // If adding as admin, also add to adminEmails collection
       if (newUserRole === 'admin') {
-        await setDoc(doc(db, 'adminEmails', newUserEmail.trim()), {
-          email: newUserEmail.trim(),
+        await setDoc(doc(db, 'adminEmails', email), {
+          email: email,
           addedBy: currentUser.uid,
           addedAt: serverTimestamp()
         });
       }
       
-      toast.success(`${newUserRole === 'admin' ? 'Admin' : 'User'} added successfully`);
+      toast.success(`${newUserRole === 'admin' ? 'Admin' : 'User'} added successfully!`);
       setNewUserEmail('');
       setNewUserRole('user');
     } catch (error) {
       console.error('Error adding user:', error);
-      toast.error('Failed to add user');
+      toast.error(`Failed to add user: ${error.message}`);
     } finally {
       setAddingUser(false);
     }
@@ -213,10 +230,15 @@ const AdminPage = () => {
   const handleRemoveUser = async (userEmail) => {
     try {
       // Remove from preAddedUsers collection
-      await setDoc(doc(db, 'preAddedUsers', userEmail), {}, { merge: false });
+      await deleteDoc(doc(db, 'preAddedUsers', userEmail));
       
-      // If was admin, also remove from adminEmails
-      await setDoc(doc(db, 'adminEmails', userEmail), {}, { merge: false });
+      // If was admin, also try to remove from adminEmails (ignore errors if doesn't exist)
+      try {
+        await deleteDoc(doc(db, 'adminEmails', userEmail));
+      } catch (adminError) {
+        // Ignore error if admin email doesn't exist
+        console.log('Admin email document not found, which is fine');
+      }
       
       toast.success('User removed successfully');
     } catch (error) {

@@ -50,7 +50,10 @@ export const AuthProvider = ({ children }) => {
       console.log('Checking admin status for:', user.email); // Debug log
       
       // Check if user email is the designated admin
-      const adminEmails = ['promisebansah12@gmail.com'];
+      const adminEmails = [
+        'promisebansah12@gmail.com',
+        'promisebansah@yahoo.com'
+      ];
       const isDesignatedAdmin = adminEmails.includes(user.email);
       
       console.log('Is designated admin:', isDesignatedAdmin); // Debug log
